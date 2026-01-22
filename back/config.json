@@ -1,0 +1,13 @@
+{
+  "points": [
+    {
+      "temperature": 20,
+      "fanSpeed": 10
+    },
+    {
+      "temperature": 50,
+      "fanSpeed": 70
+    }
+  ],
+  "interpolationMode": "gradual"
+}

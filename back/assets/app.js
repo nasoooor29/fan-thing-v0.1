@@ -1,17 +1,14 @@
 // API Configuration
-const API_URL = 'http://localhost:8080';
+const API_URL = '';
 
 // State
-let points = [
-    { temperature: 30, fanSpeed: 25 },
-    { temperature: 60, fanSpeed: 50 },
-    { temperature: 80, fanSpeed: 100 }
-];
+let points = [];
 
 let chart = null;
 
 // Initialize the application
-function init() {
+async function init() {
+    await loadConfig(); // Auto-load on startup
     renderPointsList();
     updateChart();
     setupEventListeners();
@@ -100,12 +97,12 @@ function addPoint() {
     renderPointsList();
 }
 
-// Update the chart by fetching data from backend
+// Update the chart by fetching data from backend (also auto-saves)
 async function updateChart() {
     const interpolationMode = document.getElementById('interpolation-mode').value;
 
     try {
-        const response = await fetch(`${API_URL}/api/generate-curve`, {
+        const response = await fetch(`/api/generate-curve`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -124,7 +121,7 @@ async function updateChart() {
         renderChart(data);
     } catch (error) {
         console.error('Error updating chart:', error);
-        alert('Failed to update chart. Make sure the backend server is running on port 8080.');
+        alert('Failed to update chart. Make sure the backend server is running.');
     }
 }
 
@@ -204,6 +201,20 @@ function renderChart(data) {
             }
         }
     });
+}
+
+// Load configuration on page load
+async function loadConfig() {
+    try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+            const config = await response.json();
+            points = config.points;
+            document.getElementById('interpolation-mode').value = config.interpolationMode;
+        }
+    } catch (error) {
+        console.error('Error loading config:', error);
+    }
 }
 
 // Initialize when DOM is ready
