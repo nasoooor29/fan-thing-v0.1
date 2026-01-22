@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"log/slog"
 	"net/http"
+	"time"
 )
 
 //go:embed all:assets
@@ -40,9 +42,17 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 		"curveData":     curveData,
 		"controlPoints": req.Points,
 	}
-	storage.Save(CURVE_FILE, response)
+	err := storage.Save(CURVE_FILE, response)
+	if err != nil {
+		slog.Error("could not save the curve file", "err", err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
+
+	// send the curve to the esp32
+	SendCurveToESP32()
+
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -67,9 +77,28 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(config)
 }
 
+func SendCurveToESP32() {
+	// read the esp32 ip from config.json
+	config, err := storage.LoadConfig()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
+	// generate the curve for the esp
+	points := GenerateChartData(config)
+	fmt.Printf("sending curve to esp32 (points: %v)...\n", len(points))
+}
+
 func main() {
 	// Initialize storage
 	storage = NewStorage()
+
+	go func() {
+		for {
+			SendCurveToESP32()
+			time.Sleep(INTREVAL_MS * time.Millisecond)
+		}
+	}()
 
 	// Get the embedded assets filesystem
 	assetsSubFS, err := fs.Sub(assetsFS, "assets")
@@ -86,7 +115,7 @@ func main() {
 
 	fmt.Println("Server starting on http://localhost:8080")
 	fmt.Println("Open http://localhost:8080 in your browser")
-	fmt.Println("All assets are embedded in the binary!")
 	fmt.Println("Configuration auto-saves to ./config.json")
+	fmt.Println("Curve Points auto-saves to ./curve.json")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -3,6 +3,7 @@ package main
 const (
 	CONFIG_FILE = "config.json"
 	CURVE_FILE  = "curve.json"
+	INTREVAL_MS = 1000
 )
 
 // FanCurvePoint represents a temperature to fan speed mapping
