@@ -14,8 +14,6 @@ import (
 //go:embed all:assets
 var assetsFS embed.FS
 
-var storage *Storage
-
 // enableCORS adds CORS headers to allow frontend access
 func enableCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -34,7 +32,7 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Auto-save configuration
-	storage.Save(CONFIG_FILE, &req)
+	Save(CONFIG_FILE, &req)
 
 	curveData := GenerateChartData(&req)
 
@@ -42,24 +40,23 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 		"curveData":     curveData,
 		"controlPoints": req.Points,
 	}
-	err := storage.Save(CURVE_FILE, response)
+	err := Save(CURVE_FILE, response)
 	if err != nil {
 		slog.Error("could not save the curve file", "err", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 
 	// send the curve to the esp32
-	SendCurveToESP32()
-
-	json.NewEncoder(w).Encode(response)
+	go SendCurveToESP32()
 }
 
 // handleGetConfig returns the saved configuration
 func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-	config, err := storage.LoadConfig()
+	config, err := LoadConfig[FanCurveConfig]()
 	if err != nil {
 		// Return empty/default config if none exists
 		config = &FanCurveConfig{
@@ -70,7 +67,7 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 			},
 			InterpolationMode: "gradual",
 		}
-		storage.Save(CONFIG_FILE, config)
+		Save(CONFIG_FILE, config)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,7 +76,7 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 
 func SendCurveToESP32() {
 	// read the esp32 ip from config.json
-	config, err := storage.LoadConfig()
+	config, err := LoadConfig[FanCurveConfig]()
 	if err != nil {
 		slog.Error("error happened", "err", err)
 		return
@@ -99,9 +96,6 @@ func SendCurveToESP32() {
 }
 
 func main() {
-	// Initialize storage
-	storage = NewStorage()
-
 	go func() {
 		for {
 			SendCurveToESP32()
