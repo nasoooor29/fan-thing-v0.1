@@ -90,6 +90,11 @@ func SendCurveToESP32() {
 		return
 	}
 	speed := CalculateFanSpeed(tmp, config)
+	err = SendPostRequest(int(speed))
+	if err != nil {
+		slog.Error("could not send the post req", "err", err)
+		return
+	}
 	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
 }
 
