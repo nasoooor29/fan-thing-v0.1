@@ -1,5 +1,10 @@
 package main
 
+const (
+	CONFIG_FILE = "config.json"
+	CURVE_FILE  = "curve.json"
+)
+
 // FanCurvePoint represents a temperature to fan speed mapping
 type FanCurvePoint struct {
 	Temperature float64 `json:"temperature"`
@@ -16,10 +21,4 @@ type FanCurveConfig struct {
 type CurveDataPoint struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
-}
-
-// GenerateCurveResponse is the response containing the full curve data
-type GenerateCurveResponse struct {
-	CurveData     []CurveDataPoint `json:"curveData"`
-	ControlPoints []FanCurvePoint  `json:"controlPoints"`
 }

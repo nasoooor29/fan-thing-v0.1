@@ -8,8 +8,6 @@ import (
 	"sync"
 )
 
-const configFile = "config.json"
-
 // Storage handles all data persistence and business logic
 type Storage struct {
 	mu sync.RWMutex
@@ -21,21 +19,16 @@ func NewStorage() *Storage {
 }
 
 // SaveConfig saves the fan curve configuration to disk
-func (s *Storage) SaveConfig(points []FanCurvePoint, mode string) error {
+func (s *Storage) Save(name string, config any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	config := FanCurveConfig{
-		Points:            points,
-		InterpolationMode: mode,
-	}
 
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(configFile, data, 0644); err != nil {
+	if err := os.WriteFile(name, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
@@ -47,7 +40,7 @@ func (s *Storage) LoadConfig() (*FanCurveConfig, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	data, err := os.ReadFile(configFile)
+	data, err := os.ReadFile(CONFIG_FILE)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("no saved configuration found")
@@ -64,14 +57,14 @@ func (s *Storage) LoadConfig() (*FanCurveConfig, error) {
 }
 
 // CalculateFanSpeedGradual performs linear interpolation between control points
-func CalculateFanSpeedGradual(temperature float64, points []FanCurvePoint) float64 {
-	if len(points) == 0 {
+func CalculateFanSpeedGradual(temperature float64, config *FanCurveConfig) float64 {
+	if len(config.Points) == 0 {
 		return 0
 	}
 
 	// Sort points by temperature
-	sortedPoints := make([]FanCurvePoint, len(points))
-	copy(sortedPoints, points)
+	sortedPoints := make([]FanCurvePoint, len(config.Points))
+	copy(sortedPoints, config.Points)
 	sort.Slice(sortedPoints, func(i, j int) bool {
 		return sortedPoints[i].Temperature < sortedPoints[j].Temperature
 	})
@@ -105,14 +98,14 @@ func CalculateFanSpeedGradual(temperature float64, points []FanCurvePoint) float
 }
 
 // CalculateFanSpeedHardCut performs step-based interpolation
-func CalculateFanSpeedHardCut(temperature float64, points []FanCurvePoint) float64 {
-	if len(points) == 0 {
+func CalculateFanSpeedHardCut(temperature float64, config *FanCurveConfig) float64 {
+	if len(config.Points) == 0 {
 		return 0
 	}
 
 	// Sort points by temperature
-	sortedPoints := make([]FanCurvePoint, len(points))
-	copy(sortedPoints, points)
+	sortedPoints := make([]FanCurvePoint, len(config.Points))
+	copy(sortedPoints, config.Points)
 	sort.Slice(sortedPoints, func(i, j int) bool {
 		return sortedPoints[i].Temperature < sortedPoints[j].Temperature
 	})
@@ -135,18 +128,18 @@ func CalculateFanSpeedHardCut(temperature float64, points []FanCurvePoint) float
 }
 
 // CalculateFanSpeed dispatches to the appropriate calculation method
-func CalculateFanSpeed(temperature float64, points []FanCurvePoint, mode string) float64 {
-	if mode == "hardcut" {
-		return CalculateFanSpeedHardCut(temperature, points)
+func CalculateFanSpeed(temperature float64, config *FanCurveConfig) float64 {
+	if config.InterpolationMode == "hardcut" {
+		return CalculateFanSpeedHardCut(temperature, config)
 	}
-	return CalculateFanSpeedGradual(temperature, points)
+	return CalculateFanSpeedGradual(temperature, config)
 }
 
 // GenerateChartData generates the full fan curve data for visualization
-func GenerateChartData(points []FanCurvePoint, mode string) []CurveDataPoint {
+func GenerateChartData(config *FanCurveConfig) []CurveDataPoint {
 	curveData := make([]CurveDataPoint, 0, 101)
 	for temp := 0; temp <= 100; temp++ {
-		fanSpeed := CalculateFanSpeed(float64(temp), points, mode)
+		fanSpeed := CalculateFanSpeed(float64(temp), config)
 		curveData = append(curveData, CurveDataPoint{
 			X: float64(temp),
 			Y: fanSpeed,

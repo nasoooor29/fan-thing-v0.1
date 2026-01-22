@@ -6,7 +6,7 @@
     },
     {
       "temperature": 50,
-      "fanSpeed": 70
+      "fanSpeed": 80
     }
   ],
   "interpolationMode": "gradual"

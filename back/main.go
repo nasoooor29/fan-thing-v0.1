@@ -24,14 +24,6 @@ func enableCORS(w http.ResponseWriter) {
 // handleGenerateCurve generates the full fan curve data for visualization
 func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var req FanCurveConfig
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -40,13 +32,15 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Auto-save configuration
-	storage.SaveConfig(req.Points, req.InterpolationMode)
+	storage.Save(CONFIG_FILE, &req)
 
-	curveData := GenerateChartData(req.Points, req.InterpolationMode)
-	response := GenerateCurveResponse{
-		CurveData:     curveData,
-		ControlPoints: req.Points,
+	curveData := GenerateChartData(&req)
+
+	response := map[string]any{
+		"curveData":     curveData,
+		"controlPoints": req.Points,
 	}
+	storage.Save(CURVE_FILE, response)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -55,15 +49,6 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 // handleGetConfig returns the saved configuration
 func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	config, err := storage.LoadConfig()
 	if err != nil {
 		// Return empty/default config if none exists
@@ -75,6 +60,7 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 			},
 			InterpolationMode: "gradual",
 		}
+		storage.Save(CONFIG_FILE, config)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -92,8 +78,8 @@ func main() {
 	}
 
 	// API endpoints (must come before static files)
-	http.HandleFunc("/api/generate-curve", handleGenerateCurve)
-	http.HandleFunc("/api/config", handleGetConfig)
+	http.HandleFunc("POST /api/generate-curve", handleGenerateCurve)
+	http.HandleFunc("GET /api/config", handleGetConfig)
 
 	// Serve static files from embedded assets
 	http.Handle("/", http.FileServer(http.FS(assetsSubFS)))
