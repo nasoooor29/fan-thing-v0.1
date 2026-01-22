@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fan Curve Configuration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fan Curve Configuration</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="interpolation-mode">Interpolation Mode:</label>
+                <select id="interpolation-mode">
+                    <option value="gradual">Gradual (Linear)</option>
+                    <option value="hardcut">Hard Cuts (Step)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="fan-chart"></canvas>
+        </div>
+
+        <div class="points-section">
+            <h2>Control Points</h2>
+            <div id="points-list"></div>
+            <button id="add-point-btn" class="btn btn-primary">Add Point</button>
+            <button id="update-curve-btn" class="btn btn-success">Update Curve</button>
+        </div>
+    </div>
+
+    <script src="chart.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
