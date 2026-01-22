@@ -30,32 +30,36 @@ function renderPointsList() {
         const pointDiv = document.createElement('div');
         pointDiv.className = 'point-item';
         pointDiv.innerHTML = `
-            <div class="point-inputs">
-                <div class="input-group">
-                    <label>Temperature (°C):</label>
-                    <input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        value="${point.temperature}"
-                        data-index="${index}"
-                        data-field="temperature"
-                        class="point-input"
-                    >
+            <div class="points-details">
+                <div class="point-inputs">
+                    <div class="input-group">
+                        <label>Temperature (°C):</label>
+                        <input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value="${point.temperature}"
+                            data-index="${index}"
+                            data-field="temperature"
+                            class="point-input"
+                        >
+                    </div>
+                    <div class="input-group">
+                        <label>Fan Speed (%):</label>
+                        <input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value="${point.fanSpeed}"
+                            data-index="${index}"
+                            data-field="fanSpeed"
+                            class="point-input"
+                        >
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label>Fan Speed (%):</label>
-                    <input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        value="${point.fanSpeed}"
-                        data-index="${index}"
-                        data-field="fanSpeed"
-                        class="point-input"
-                    >
+                <div class="point-actions">
+                    <button class="btn btn-danger" data-index="${index}">Remove</button>
                 </div>
-                <button class="btn btn-danger" data-index="${index}">Remove</button>
             </div>
         `;
         pointsList.appendChild(pointDiv);

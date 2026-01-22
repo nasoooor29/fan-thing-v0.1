@@ -221,3 +221,14 @@ input[type="number"]:focus {
         height: 300px;
     }
 }
+
+.points-details {
+    display: flex;
+    justify-content: space-between;
+}
+
+.point-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
