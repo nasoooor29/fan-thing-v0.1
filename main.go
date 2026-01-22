@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 //go:embed all:assets
@@ -48,9 +47,6 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-
-	// send the curve to the esp32
-	go SendCurveToESP32()
 }
 
 // handleGetConfig returns the saved configuration
@@ -74,35 +70,26 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(config)
 }
 
-func SendCurveToESP32() {
-	// read the esp32 ip from config.json
+func handleGetFanSpeed(w http.ResponseWriter, r *http.Request) {
+	enableCORS(w)
+	// Placeholder implementation
+	w.Header().Set("Content-Type", "application/json")
+	// get current temp
 	config, err := LoadConfig[FanCurveConfig]()
 	if err != nil {
-		slog.Error("error happened", "err", err)
+		http.Error(w, "Failed to load config", http.StatusInternalServerError)
 		return
 	}
-	tmp, err := GetCurrentSystemTemp()
+	temp, err := GetCurrentSystemTemp()
 	if err != nil {
 		slog.Error("error happened", "err", err)
 		return
 	}
-	speed := CalculateFanSpeed(tmp, config)
-	err = SendPostRequest(int(speed))
-	if err != nil {
-		slog.Error("could not send the post req", "err", err)
-		return
-	}
-	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
+	fanSpeed := CalculateFanSpeed(float64(temp), config)
+	fmt.Fprintf(w, "%v", int(fanSpeed))
 }
 
 func main() {
-	go func() {
-		for {
-			SendCurveToESP32()
-			time.Sleep(INTREVAL_MS * time.Millisecond)
-		}
-	}()
-
 	// Get the embedded assets filesystem
 	assetsSubFS, err := fs.Sub(assetsFS, "assets")
 	if err != nil {
@@ -112,6 +99,7 @@ func main() {
 	// API endpoints (must come before static files)
 	http.HandleFunc("POST /api/generate-curve", handleGenerateCurve)
 	http.HandleFunc("GET /api/config", handleGetConfig)
+	http.HandleFunc("GET /api/getFanSpeed", handleGetFanSpeed)
 
 	// Serve static files from embedded assets
 	http.Handle("/", http.FileServer(http.FS(assetsSubFS)))
