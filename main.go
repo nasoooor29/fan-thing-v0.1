@@ -84,9 +84,13 @@ func SendCurveToESP32() {
 		slog.Error("error happened", "err", err)
 		return
 	}
-	// generate the curve for the esp
-	points := GenerateChartData(config)
-	fmt.Printf("sending curve to esp32 (points: %v)...\n", len(points))
+	tmp, err := GetCurrentSystemTemp()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
+	speed := CalculateFanSpeed(tmp, config)
+	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
 }
 
 func main() {
