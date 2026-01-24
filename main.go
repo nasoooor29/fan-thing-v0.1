@@ -73,7 +73,7 @@ func handleGetConfig(w http.ResponseWriter, r *http.Request) {
 func handleGetFanSpeed(w http.ResponseWriter, r *http.Request) {
 	enableCORS(w)
 	// Placeholder implementation
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "text/plain")
 	// get current temp
 	config, err := LoadConfig[FanCurveConfig]()
 	if err != nil {
