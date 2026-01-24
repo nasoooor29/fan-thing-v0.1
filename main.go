@@ -8,6 +8,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 //go:embed all:assets
@@ -47,6 +48,7 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+	go SendCurveToESP32()
 }
 
 // handleGetConfig returns the saved configuration
@@ -89,7 +91,34 @@ func handleGetFanSpeed(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%v", int(fanSpeed))
 }
 
+func SendCurveToESP32() {
+	// read the esp32 ip from config.json
+	config, err := LoadConfig[FanCurveConfig]()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
+	tmp, err := GetCurrentSystemTemp()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
+	speed := CalculateFanSpeed(tmp, config)
+	err = SendToEsp(int(speed))
+	if err != nil {
+		slog.Error("could not send the post req", "err", err)
+		return
+	}
+	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
+}
+
 func main() {
+	go func() {
+		for {
+			SendCurveToESP32()
+			time.Sleep(INTREVAL_MS * time.Millisecond)
+		}
+	}()
 	// Get the embedded assets filesystem
 	assetsSubFS, err := fs.Sub(assetsFS, "assets")
 	if err != nil {
