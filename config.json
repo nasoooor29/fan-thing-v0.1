@@ -5,20 +5,8 @@
       "fanSpeed": 0
     },
     {
-      "temperature": 33,
-      "fanSpeed": 55
-    },
-    {
-      "temperature": 30,
-      "fanSpeed": 70
-    },
-    {
-      "temperature": 50,
-      "fanSpeed": 50
-    },
-    {
       "temperature": 100,
-      "fanSpeed": 100
+      "fanSpeed": 20
     }
   ],
   "interpolationMode": "gradual"

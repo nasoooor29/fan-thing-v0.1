@@ -91,28 +91,19 @@ func handleGetFanSpeed(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%v", int(fanSpeed))
 }
 
-func SendCurveToESP32() {
-	// read the esp32 ip from config.json
-	config, err := LoadConfig[FanCurveConfig]()
-	if err != nil {
-		slog.Error("error happened", "err", err)
-		return
-	}
-	tmp, err := GetCurrentSystemTemp()
-	if err != nil {
-		slog.Error("error happened", "err", err)
-		return
-	}
-	speed := CalculateFanSpeed(tmp, config)
-	err = SendToEsp(int(speed))
-	if err != nil {
-		slog.Error("could not send the post req", "err", err)
-		return
-	}
-	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
-}
-
 func main() {
+	// if err try until it connects
+	for {
+		port, err := connectToEsp()
+		if err != nil {
+			slog.Error("could not connect to esp32, retrying in 5 seconds...", "err", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		PORT = port
+		break
+	}
+
 	go func() {
 		for {
 			SendCurveToESP32()
