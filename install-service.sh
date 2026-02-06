@@ -19,7 +19,7 @@ INSTALL_DIR="/opt/${SERVICE_NAME}"
 BINARY_PATH="${INSTALL_DIR}/${APP_NAME}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 USER="${SUDO_USER:-$USER}"
-VERSION="${1:-latest}"
+APP_VERSION="${1:-latest}"
 
 echo -e "${GREEN}Installing ${SERVICE_NAME} as a systemd service${NC}"
 
@@ -55,16 +55,16 @@ echo -e "${YELLOW}Creating installation directory...${NC}"
 mkdir -p "$INSTALL_DIR"
 
 # Download binary from GitHub releases
-echo -e "${YELLOW}Downloading ${SERVICE_NAME} ${VERSION} from GitHub...${NC}"
+echo -e "${YELLOW}Downloading ${SERVICE_NAME} ${APP_VERSION} from GitHub...${NC}"
 
-if [ "$VERSION" = "latest" ]; then
+if [ "$APP_VERSION" = "latest" ]; then
     # Get latest release version
     DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/${APP_NAME}-${OS}-${GOARCH}.tar.gz"
     echo -e "${BLUE}Downloading latest release...${NC}"
 else
     # Use specific version
-    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${VERSION}/${APP_NAME}-${VERSION}-${OS}-${GOARCH}.tar.gz"
-    echo -e "${BLUE}Downloading version ${VERSION}...${NC}"
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${APP_VERSION}/${APP_NAME}-${APP_VERSION}-${OS}-${GOARCH}.tar.gz"
+    echo -e "${BLUE}Downloading version ${APP_VERSION}...${NC}"
 fi
 
 # Download and extract

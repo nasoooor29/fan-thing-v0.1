@@ -19,7 +19,7 @@ INSTALL_DIR="/opt/${SERVICE_NAME}"
 BINARY_PATH="${INSTALL_DIR}/${APP_NAME}"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 USER="${SUDO_USER:-$USER}"
-VERSION="${1:-latest}"
+APP_VERSION="${1:-latest}"
 
 echo -e "${GREEN}=== Fan Curve Server Quick Install ===${NC}"
 echo ""
@@ -74,10 +74,10 @@ mkdir -p "$INSTALL_DIR"
 # Download binary from GitHub releases
 echo -e "${YELLOW}[2/6] Downloading ${SERVICE_NAME}...${NC}"
 
-if [ "$VERSION" = "latest" ]; then
+if [ "$APP_VERSION" = "latest" ]; then
     DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/${APP_NAME}-${OS_TYPE}-${GOARCH}.tar.gz"
 else
-    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${VERSION}/${APP_NAME}-${VERSION}-${OS_TYPE}-${GOARCH}.tar.gz"
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/${APP_VERSION}/${APP_NAME}-${APP_VERSION}-${OS_TYPE}-${GOARCH}.tar.gz"
 fi
 
 echo -e "${BLUE}URL: ${DOWNLOAD_URL}${NC}"
