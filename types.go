@@ -1,15 +1,11 @@
 package main
 
-import "go.bug.st/serial"
-
 const (
 	CONFIG_FILE = "config.json"
 	CURVE_FILE  = "curve.json"
 	INTREVAL_MS = 1000
 	ESP_URL     = "http://smthing.local/fan-speed"
 )
-
-var PORT serial.Port
 
 // FanCurvePoint represents a temperature to fan speed mapping
 type FanCurvePoint struct {

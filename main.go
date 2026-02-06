@@ -92,18 +92,6 @@ func handleGetFanSpeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// if err try until it connects
-	// for {
-	// 	port, err := connectToEsp()
-	// 	if err != nil {
-	// 		slog.Error("could not connect to esp32, retrying in 5 seconds...", "err", err)
-	// 		time.Sleep(5 * time.Second)
-	// 		continue
-	// 	}
-	// 	PORT = port
-	// 	break
-	// }
-
 	go func() {
 		for {
 			SendCurveToESP32()

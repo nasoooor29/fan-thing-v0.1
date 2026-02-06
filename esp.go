@@ -34,7 +34,15 @@ func SendCurveToESP32() {
 		return
 	}
 	slog.Info("Sending data to esp", "temp (C)", tmp, "speed (%)", speed)
-	fmt.Fprintf(PORT, "%d\n", int(speed))
+
+	var port serial.Port
+
+	port, err = connectToEsp()
+	if err != nil {
+		slog.Error("could not connect to esp32, retrying in 5 seconds...", "err", err)
+		return
+	}
+	fmt.Fprintf(port, "%d\n", int(speed))
 }
 
 func GetEspPath() (string, error) {
