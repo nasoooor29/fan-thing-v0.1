@@ -42,6 +42,9 @@ func SendCurveToESP32() {
 		slog.Error("could not connect to esp32, retrying in 5 seconds...", "err", err)
 		return
 	}
+	if err := port.Close(); err != nil {
+		slog.Error("could not close esp32 serial port", "err", err)
+	}
 	fmt.Fprintf(port, "%d\n", int(speed))
 }
 
