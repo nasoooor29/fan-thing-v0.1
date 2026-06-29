@@ -1,4 +1,4 @@
-package main
+package internal
 
 const (
 	CONFIG_FILE = "config.json"
