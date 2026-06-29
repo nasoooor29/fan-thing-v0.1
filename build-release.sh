@@ -146,6 +146,26 @@ echo ""
 echo -e "${YELLOW}Generating checksums...${NC}"
 cd "$DIST_DIR"
 sha256sum *.{tar.gz,zip} 2>/dev/null > SHA256SUMS || shasum -a 256 *.{tar.gz,zip} > SHA256SUMS
+
+# Create version-less copies for "latest" GitHub release downloads
+echo -e "${YELLOW}Creating version-less copies for latest release...${NC}"
+for file in fan-curve-server-${VERSION}-*.tar.gz; do
+    if [ -f "$file" ]; then
+        # Remove version from filename: fan-curve-server-v1.0.0-linux-amd64.tar.gz -> fan-curve-server-linux-amd64.tar.gz
+        new_name=$(echo "$file" | sed "s/${VERSION}-//")
+        cp "$file" "$new_name"
+        echo -e "${GREEN}Created: ${new_name}${NC}"
+    fi
+done
+
+for file in fan-curve-server-${VERSION}-*.zip; do
+    if [ -f "$file" ]; then
+        new_name=$(echo "$file" | sed "s/${VERSION}-//")
+        cp "$file" "$new_name"
+        echo -e "${GREEN}Created: ${new_name}${NC}"
+    fi
+done
+
 cd ..
 echo -e "${GREEN}Checksums saved to ${DIST_DIR}/SHA256SUMS${NC}"
 echo ""
