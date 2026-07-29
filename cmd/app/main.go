@@ -51,7 +51,7 @@ func (p *Program) run() {
 
 	slog.Info("service started")
 
-	workTicker := time.NewTicker(1 * time.Second)
+	workTicker := time.NewTicker(5 * time.Second)
 
 	defer workTicker.Stop()
 

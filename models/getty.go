@@ -44,12 +44,13 @@ func (g Getty) GetTemp() (float64, error) {
 }
 
 func (g Getty) SendSpeed(speed float64) error {
-	// /fanctl/control/fan/1/PWM
+	// MQTT topic names are exact: this intentionally has no leading slash.
 
 	correctSpeed := speed * 10 // cuz fanzy want from 1 to 1000
-	mqttTopic := fmt.Sprintf("fanctl/control/fan/%d/PWM", g.index)
+	mqttTopic := fmt.Sprintf("/fanctl/control/fan/%d/PWM", g.index)
 	slog.Info("sending speed", "speed", correctSpeed, "topic", mqttTopic)
-	return MQTT.Publish(mqttTopic, []byte(fmt.Sprintf("%f", correctSpeed)), false, 1)
+	// Retain the latest command so a subscriber that reconnects receives it.
+	return MQTT.Publish(mqttTopic, []byte(fmt.Sprintf("%f", correctSpeed)), true, 0)
 }
 
 func GenerateGettys(deviceAdrrs []string) []Getty {
