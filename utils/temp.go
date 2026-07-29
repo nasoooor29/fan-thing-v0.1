@@ -107,7 +107,7 @@ func GetCalcSend(config *models.FanCurveConfig) {
 			slog.Error("error happened", "err", err)
 			continue
 		}
-		slog.Info("temp received", "temp", tmp, "device", g.DeviceAdrr)
+		slog.Debug("temp received", "temp", tmp, "device", g.DeviceAdrr)
 		speed := CalculateFanSpeed(tmp, config)
 		err = g.SendSpeed(speed)
 		if err != nil {

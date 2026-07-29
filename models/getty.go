@@ -48,7 +48,7 @@ func (g Getty) SendSpeed(speed float64) error {
 
 	correctSpeed := speed * 10 // cuz fanzy want from 1 to 1000
 	mqttTopic := fmt.Sprintf("/fanctl/control/fan/%d/PWM", g.index)
-	slog.Info("sending speed", "speed", correctSpeed, "topic", mqttTopic)
+	slog.Debug("sending speed", "speed", correctSpeed, "topic", mqttTopic)
 	// Retain the latest command so a subscriber that reconnects receives it.
 	return MQTT.Publish(mqttTopic, []byte(fmt.Sprintf("%f", correctSpeed)), true, 0)
 }
