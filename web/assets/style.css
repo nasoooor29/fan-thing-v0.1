@@ -42,6 +42,7 @@ h2 {
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 15px;
 }
 
 .control-group label {
@@ -56,6 +57,40 @@ select {
     font-size: 14px;
     background: white;
     cursor: pointer;
+}
+
+input[type="text"],
+textarea {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14px;
+}
+
+input[type="text"] {
+    width: 220px;
+}
+
+textarea {
+    width: 320px;
+    resize: vertical;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.controller-ips-group {
+    align-items: flex-start;
+}
+
+.field-hint {
+    align-self: center;
+    color: #666;
+    font-size: 13px;
 }
 
 select:focus {
@@ -215,6 +250,21 @@ input[type="number"]:focus {
 
     input[type="number"] {
         width: 100%;
+    }
+
+    .control-group {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    input[type="text"],
+    textarea {
+        width: 100%;
+    }
+
+    .field-hint {
+        align-self: auto;
     }
 
     .chart-container {

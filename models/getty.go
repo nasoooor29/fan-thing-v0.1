@@ -14,12 +14,11 @@ import (
 // }
 
 type Getty struct {
-	brokerIp   string
-	deviceAdrr string
+	DeviceAdrr string
 }
 
 func (g Getty) GetTemp() (float64, error) {
-	endpoint := fmt.Sprintf("http://%v/api/getCurrentTemp", g.deviceAdrr)
+	endpoint := fmt.Sprintf("http://%v/api/getCurrentTemp", g.DeviceAdrr)
 	resp, err := http.Get(endpoint)
 	if err != nil {
 		slog.Error("error happened", "err", err)
@@ -43,12 +42,11 @@ func (g Getty) SendSpeed(speed float64) error {
 	return nil
 }
 
-func GenerateGettys(brokerIp string, deviceAdrrs []string) []Getty {
+func GenerateGettys(deviceAdrrs []string) []Getty {
 	gettys := make([]Getty, len(deviceAdrrs))
 	for i, addr := range deviceAdrrs {
 		gettys[i] = Getty{
-			brokerIp:   brokerIp,
-			deviceAdrr: addr,
+			DeviceAdrr: addr,
 		}
 	}
 	return gettys

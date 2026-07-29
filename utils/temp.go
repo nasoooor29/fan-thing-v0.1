@@ -100,13 +100,14 @@ func GenerateChartData(config *models.FanCurveConfig) []models.CurveDataPoint {
 }
 
 func GetCalcSend(config *models.FanCurveConfig) {
-	gettys := models.GenerateGettys(config.BrokerIp, config.Ips)
+	gettys := models.GenerateGettys(config.Ips)
 	for _, g := range gettys {
 		tmp, err := g.GetTemp()
 		if err != nil {
 			slog.Error("error happened", "err", err)
 			continue
 		}
+		slog.Debug("temp received", "temp", tmp, "device", g.DeviceAdrr)
 		speed := CalculateFanSpeed(tmp, config)
 		err = g.SendSpeed(speed)
 		if err != nil {

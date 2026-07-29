@@ -104,6 +104,10 @@ function addPoint() {
 // Update the chart by fetching data from backend (also auto-saves)
 async function updateChart() {
     const interpolationMode = document.getElementById('interpolation-mode').value;
+    const ips = document.getElementById('controller-ips').value
+        .split(/\r?\n/)
+        .map(ip => ip.trim())
+        .filter(Boolean);
 
     try {
         const response = await fetch(`/api/generate-curve`, {
@@ -113,7 +117,8 @@ async function updateChart() {
             },
             body: JSON.stringify({
                 points: points,
-                interpolationMode: interpolationMode
+                interpolationMode: interpolationMode,
+                ips: ips
             })
         });
 
@@ -215,6 +220,7 @@ async function loadConfig() {
             const config = await response.json();
             points = config.points;
             document.getElementById('interpolation-mode').value = config.interpolationMode;
+            document.getElementById('controller-ips').value = (config.ips || []).join('\n');
         }
     } catch (error) {
         console.error('Error loading config:', error);
