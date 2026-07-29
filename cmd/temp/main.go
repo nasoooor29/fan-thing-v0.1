@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"os"
 
 	"fan-curve-server/web"
@@ -28,7 +28,7 @@ func (p *Program) Start(s service.Service) error {
 func (p *Program) Stop(s service.Service) error {
 	close(p.stop)
 
-	log.Println("service stopped")
+	slog.Info("service stopped")
 
 	return nil
 }
@@ -44,19 +44,22 @@ func main() {
 
 	s, err := service.New(prg, config)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
 	}
 	// Handle service control actions (install, uninstall, start, stop)
 	if len(os.Args) > 1 {
 		err := service.Control(s, os.Args[1])
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("an error occured", "err", err)
+			os.Exit(1)
 		}
 		return
 	}
 
 	err = s.Run()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
 	}
 }

@@ -4,8 +4,9 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 //go:embed all:assets
@@ -23,7 +24,8 @@ func StartWebApp() {
 	// Get the embedded assets filesystem
 	assetsSubFS, err := fs.Sub(assetsFS, "assets")
 	if err != nil {
-		log.Fatal("Failed to load embedded assets:", err)
+		slog.Error("Failed to load embedded assets", "err", err)
+		os.Exit(1)
 	}
 
 	// API endpoints (must come before static files)
@@ -36,7 +38,11 @@ func StartWebApp() {
 	fmt.Printf("Server starting on http://localhost:%v\n", port)
 	fmt.Println("Configuration auto-saves to ./config.json")
 	fmt.Println("Curve Points auto-saves to ./curve.json")
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+	err = http.ListenAndServe(fmt.Sprintf(":%v", port), nil)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
 }
 
 func StartTempServer() {
@@ -46,5 +52,9 @@ func StartTempServer() {
 	http.HandleFunc("GET /api/getCurrentTemp", handleGetCurrentTemp)
 
 	fmt.Printf("Server starting on http://localhost:%v\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+	err := http.ListenAndServe(fmt.Sprintf(":%v", port), nil)
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return
+	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -30,7 +29,7 @@ func (p *Program) Start(s service.Service) error {
 func (p *Program) Stop(s service.Service) error {
 	close(p.stop)
 
-	log.Println("service stopped")
+	slog.Info("service stopped")
 
 	return nil
 }
@@ -38,9 +37,9 @@ func (p *Program) Stop(s service.Service) error {
 func (p *Program) run() {
 	go web.StartWebApp()
 
-	log.Println("service started:", version)
+	slog.Info("service started")
 
-	workTicker := time.NewTicker(5 * time.Second)
+	workTicker := time.NewTicker(1 * time.Second)
 
 	defer workTicker.Stop()
 
@@ -49,7 +48,6 @@ func (p *Program) run() {
 
 		case <-workTicker.C:
 			// Your actual work
-			log.Printf("doing work with version: %v\n", version)
 
 			config, err := utils.LoadConfig[models.FanCurveConfig](models.CONFIG_FILE)
 			if err != nil {
@@ -74,19 +72,22 @@ func main() {
 
 	s, err := service.New(prg, config)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
 	}
 	// Handle service control actions (install, uninstall, start, stop)
 	if len(os.Args) > 1 {
 		err := service.Control(s, os.Args[1])
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("an error occured", "err", err)
+			os.Exit(1)
 		}
 		return
 	}
 
 	err = s.Run()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
 	}
 }
