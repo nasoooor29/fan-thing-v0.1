@@ -75,9 +75,9 @@ func (p *Program) run() {
 
 func main() {
 	config := &service.Config{
-		Name:        "FanThingService",
-		DisplayName: "FanThing Service",
-		Description: "A service to control server fans based on ipmi temp using ipmitool and mqtt.",
+		Name:        "FanThingMainService",
+		DisplayName: "FanThing Main Service",
+		Description: "it pulls the temps from http endpoints and sends the fan speed to mqtt.",
 	}
 
 	prg := &Program{}
