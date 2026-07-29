@@ -18,6 +18,7 @@ type FanCurveConfig struct {
 	Points            []FanCurvePoint `json:"points"`
 	InterpolationMode string          `json:"interpolationMode"` // "gradual" or "hardcut"
 	Ips               []string        `json:"ips"`               // List of ESP32 IPs to send the curve to
+	BrokerIp          string          `json:"brokerIp"`          // IP of the MQTT broker
 }
 
 // CurveDataPoint represents a single point in the generated curve

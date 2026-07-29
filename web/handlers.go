@@ -36,7 +36,7 @@ func handleGenerateCurve(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-	go utils.SendCurveToESP32()
+	go utils.GetCalcSend(&req)
 }
 
 // handleGetConfig returns the saved configuration

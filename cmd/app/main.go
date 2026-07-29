@@ -2,9 +2,12 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
+	"fan-curve-server/models"
+	"fan-curve-server/utils"
 	"fan-curve-server/web"
 
 	"github.com/kardianos/service"
@@ -48,6 +51,12 @@ func (p *Program) run() {
 			// Your actual work
 			log.Printf("doing work with version: %v\n", version)
 
+			config, err := utils.LoadConfig[models.FanCurveConfig](models.CONFIG_FILE)
+			if err != nil {
+				slog.Error("error happened", "err", err)
+				continue
+			}
+			utils.GetCalcSend(config)
 		case <-p.stop:
 			return
 		}
@@ -68,7 +77,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// Handle service control actions (install, uninstall, start, stop)
-	if len(os.Args) > 0 {
+	if len(os.Args) > 1 {
 		err := service.Control(s, os.Args[1])
 		if err != nil {
 			log.Fatal(err)

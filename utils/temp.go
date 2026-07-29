@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log/slog"
 	"sort"
 
 	"fan-curve-server/models"
@@ -96,4 +97,21 @@ func GenerateChartData(config *models.FanCurveConfig) []models.CurveDataPoint {
 		})
 	}
 	return curveData
+}
+
+func GetCalcSend(config *models.FanCurveConfig) {
+	gettys := models.GenerateGettys(config.BrokerIp, config.Ips)
+	for _, g := range gettys {
+		tmp, err := g.GetTemp()
+		if err != nil {
+			slog.Error("error happened", "err", err)
+			continue
+		}
+		speed := CalculateFanSpeed(tmp, config)
+		err = g.SendSpeed(speed)
+		if err != nil {
+			slog.Error("error happened", "err", err)
+			continue
+		}
+	}
 }
