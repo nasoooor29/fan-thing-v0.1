@@ -1,4 +1,4 @@
-package internal
+package utils
 
 import (
 	"encoding/json"
@@ -21,8 +21,8 @@ func Save(name string, config any) error {
 }
 
 // LoadConfig loads the configuration from disk
-func LoadConfig[T any]() (*T, error) {
-	data, err := os.ReadFile(CONFIG_FILE)
+func LoadConfig[T any](conf string) (*T, error) {
+	data, err := os.ReadFile(conf)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("no saved configuration found")

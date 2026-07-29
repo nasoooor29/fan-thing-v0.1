@@ -1,4 +1,4 @@
-package internal
+package models
 
 const (
 	CONFIG_FILE = "config.json"
@@ -17,6 +17,7 @@ type FanCurvePoint struct {
 type FanCurveConfig struct {
 	Points            []FanCurvePoint `json:"points"`
 	InterpolationMode string          `json:"interpolationMode"` // "gradual" or "hardcut"
+	Ips               []string        `json:"ips"`               // List of ESP32 IPs to send the curve to
 }
 
 // CurveDataPoint represents a single point in the generated curve
