@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	mqtt "github.com/mochi-mqtt/server/v2"
 )
 
 // type Getty interface {
@@ -13,8 +15,11 @@ import (
 // 	SendTemp(endpoint string) float64
 // }
 
+var MQTT *mqtt.Server
+
 type Getty struct {
 	DeviceAdrr string
+	index      int
 }
 
 func (g Getty) GetTemp() (float64, error) {
@@ -39,7 +44,12 @@ func (g Getty) GetTemp() (float64, error) {
 }
 
 func (g Getty) SendSpeed(speed float64) error {
-	return nil
+	// /fanctl/control/fan/1/PWM
+
+	correctSpeed := speed * 10 // cuz fanzy want from 1 to 1000
+	mqttTopic := fmt.Sprintf("fanctl/control/fan/%d/PWM", g.index)
+	slog.Info("sending speed", "speed", correctSpeed, "topic", mqttTopic)
+	return MQTT.Publish(mqttTopic, []byte(fmt.Sprintf("%f", correctSpeed)), false, 1)
 }
 
 func GenerateGettys(deviceAdrrs []string) []Getty {
@@ -47,6 +57,7 @@ func GenerateGettys(deviceAdrrs []string) []Getty {
 	for i, addr := range deviceAdrrs {
 		gettys[i] = Getty{
 			DeviceAdrr: addr,
+			index:      i + 1,
 		}
 	}
 	return gettys

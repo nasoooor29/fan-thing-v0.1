@@ -10,16 +10,25 @@ import (
 	"fan-curve-server/web"
 
 	"github.com/kardianos/service"
+	mqtt "github.com/mochi-mqtt/server/v2"
 )
 
 var version = "1.0.0"
 
 type Program struct {
 	stop chan struct{}
+	mqtt *mqtt.Server
 }
 
 func (p *Program) Start(s service.Service) error {
 	p.stop = make(chan struct{})
+	mqtt, err := web.CreateMqtt()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return err
+	}
+	models.MQTT = mqtt
+	p.mqtt = mqtt
 
 	go p.run()
 
@@ -28,6 +37,8 @@ func (p *Program) Start(s service.Service) error {
 
 func (p *Program) Stop(s service.Service) error {
 	close(p.stop)
+	p.mqtt.Close()
+	models.MQTT = nil
 
 	slog.Info("service stopped")
 
@@ -36,6 +47,7 @@ func (p *Program) Stop(s service.Service) error {
 
 func (p *Program) run() {
 	go web.StartWebApp()
+	go p.mqtt.Serve()
 
 	slog.Info("service started")
 
