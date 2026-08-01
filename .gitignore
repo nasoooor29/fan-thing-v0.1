@@ -1,5 +1,4 @@
-tmp
-fan-curve-server
-curve.json
+temp-server
+main-server
 config.json
-dist
+curve.json

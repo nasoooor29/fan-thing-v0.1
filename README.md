@@ -1,156 +1,122 @@
-# Fan Curve Server
+# Fan Thingy
 
-A Go-based fan control server with web interface for managing fan curves based on system temperature.
+Fan Thingy controls server fan speeds from a temperature-to-speed curve. It consists of a central controller and a lightweight temperature agent installed on every monitored server.
 
-## Quick Install (Linux)
+The controller polls each agent for its current temperature, calculates a fan speed from the configured curve, and publishes that speed to [Super Fanzy](https://github.com/qulxizer/superfanzy) over MQTT.
 
-One-line install command:
-```bash
-curl -sSL https://raw.githubusercontent.com/nasoooor29/fan-thing-v0.1/main/quick-install.sh | sudo bash
-```
+## Architecture
 
-Or install specific version:
-```bash
-curl -sSL https://raw.githubusercontent.com/nasoooor29/fan-thing-v0.1/main/quick-install.sh | sudo bash -s v1.0.0
-```
+| Component | Runs on | Responsibility | Port |
+| --- | --- | --- | --- |
+| Main controller | One host | Serves the web UI, runs the MQTT broker, polls agents, and publishes fan commands | HTTP `8080`, MQTT `1883` |
+| Temperature agent | Each monitored server | Reads the current temperature using `ipmitool` and exposes it over HTTP | HTTP `8081` |
 
-## Manual Installation
+The controller maps the order of device addresses in the configuration to Fanzy fan topics:
 
-### Download Pre-built Binaries
+| Device position | MQTT topic |
+| --- | --- |
+| First address | `/fanctl/control/fan/1/PWM` |
+| Second address | `/fanctl/control/fan/2/PWM` |
+| Nth address | `/fanctl/control/fan/N/PWM` |
 
-Download the appropriate release for your platform from the [releases page](https://github.com/nasoooor29/fan-thing-v0.1/releases).
+Fan speeds are configured as percentages (`0` to `100`) and sent to Fanzy on its `0` to `1000` scale.
 
-Available platforms:
-- Linux (amd64, arm64, armv7)
-- macOS (amd64/Intel, arm64/Apple Silicon)
-- Windows (amd64)
+## Requirements
 
-### Linux Service Installation
+- Go `1.25.12` or newer for local builds
+- Linux hosts with `systemd`-compatible service support
+- `ipmitool` on every host running the temperature agent
+- SSH access as `root` to deployment targets
+- Super Fanzy configured to connect to the controller's MQTT broker
 
-For Linux systems, you can install as a systemd service:
+The bundled MQTT broker currently permits unauthenticated connections. Keep port `1883` on a trusted network.
 
-```bash
-sudo ./install-service.sh
-```
+## Quick Start
 
-This will:
-- Download the latest release from GitHub
-- Install to `/opt/fan-curve-server/`
-- Create and enable a systemd service
-- Auto-start on boot
+1. Configure Super Fanzy on the fan-controller device and point it at the controller host on MQTT port `1883`.
+2. Update the `IPS` arrays in the scripts for your environment.
+   - `scripts/authorize-devices.sh`: every target host.
+   - `scripts/deploy-temp-app.sh`: every server that will report a temperature.
+   - `scripts/deploy-main-app.sh`: the one host that will run the controller.
+3. Install your SSH key on the target hosts:
 
-To install a specific version:
-```bash
-sudo ./install-service.sh v1.0.0
-```
+   ```bash
+   bash ./scripts/authorize-devices.sh
+   ```
 
-### Service Management
+4. Build and deploy the temperature agent to every monitored server:
 
-```bash
-# Check status
-sudo systemctl status fan-curve-server
+   ```bash
+   bash ./scripts/deploy-temp-app.sh
+   ```
 
-# Stop service
-sudo systemctl stop fan-curve-server
+5. Build and deploy the main controller:
 
-# Start service
-sudo systemctl start fan-curve-server
+   ```bash
+   bash ./scripts/deploy-main-app.sh
+   ```
 
-# Restart service
-sudo systemctl restart fan-curve-server
-
-# View logs
-sudo journalctl -u fan-curve-server -f
-```
-
-### Uninstall Service
-
-```bash
-sudo ./uninstall-service.sh
-```
-
-## Manual Usage
-
-Simply run the binary:
-
-```bash
-# Linux/macOS
-./fan-curve-server
-
-# Windows
-fan-curve-server.exe
-```
-
-Then open http://localhost:8080 in your browser.
-
-## Building from Source
-
-### Prerequisites
-- Go 1.25.5 or later
-
-### Build for current platform
-```bash
-go build -o fan-curve-server .
-```
-
-### Build for all platforms
-```bash
-./build-release.sh v1.0.0
-```
-
-This creates release archives for all supported platforms in the `dist/` directory.
-
-## Creating a Release
-
-The build script can automatically create a GitHub release:
-
-```bash
-# Build and create release
-./build-release.sh v1.0.0
-
-# When prompted, choose 'y' to create GitHub release
-```
-
-Requirements for automatic release:
-- GitHub CLI (`gh`) installed
-- Git repository with remote configured
-- Proper GitHub authentication
-
-## Features
-
-- Web-based fan curve configuration
-- Multiple interpolation modes
-- Automatic configuration saving
-- ESP32 integration support
-- System temperature monitoring
-- RESTful API
+6. Open `http://<controller-host>:8080`, add the temperature-agent addresses in fan order, and draw or edit the fan curve. Changes are saved automatically to `config.json`.
 
 ## Configuration
 
-Configuration files are stored in the working directory:
-- `config.json` - Fan curve configuration
-- `curve.json` - Generated curve data
+The controller stores its settings in `config.json` in its working directory. The web UI is the recommended way to manage it. A configuration looks like this:
 
-## API Endpoints
-
-- `GET /api/config` - Get current configuration
-- `POST /api/generate-curve` - Generate and save fan curve
-- `GET /api/getFanSpeed` - Get current fan speed based on temperature
-
-## Development
-
-### Project Structure
-```
-.
-├── main.go           # Main server and HTTP handlers
-├── esp.go            # ESP32 communication
-├── temp.go           # Temperature monitoring
-├── storage.go        # Configuration persistence
-├── types.go          # Type definitions
-├── assets/           # Web UI assets
-└── scripts/          # Build and install scripts
+```json
+{
+  "points": [
+    { "temperature": 30, "fanSpeed": 25 },
+    { "temperature": 60, "fanSpeed": 50 },
+    { "temperature": 80, "fanSpeed": 100 }
+  ],
+  "interpolationMode": "gradual",
+  "ips": [
+    "192.168.100.101:8081",
+    "192.168.100.102:8081"
+  ]
+}
 ```
 
-## License
+- `points`: temperature in degrees Celsius and fan speed as a percentage.
+- `interpolationMode`: `gradual` linearly interpolates between points; `hardcut` uses the speed of the highest threshold at or below the current temperature.
+- `ips`: temperature-agent addresses, including port `8081`, ordered to match Super Fanzy fan numbers.
 
-See LICENSE file for details.
+The controller polls all configured agents every five seconds. It also writes `curve.json`, which contains the generated chart data.
+
+## Temperature Agent API
+
+After deployment, verify an agent directly:
+
+```bash
+curl http://192.168.100.101:8081/api/getCurrentTemp
+```
+
+The endpoint returns a plain-text Celsius value, for example `49`.
+
+The agent first reads the `CPU1 Temp` and `CPU2 Temp` IPMI sensors and returns their average. If IPMI is unavailable, it falls back to `/sys/class/thermal/thermal_zone0/temp`.
+
+## Local Development
+
+Run the controller:
+
+```bash
+go run ./cmd/app
+```
+
+Run a temperature agent in a separate terminal:
+
+```bash
+go run ./cmd/temp
+```
+
+Both programs use service-management arguments such as `install`, `start`, `stop`, and `uninstall` when deployed. The deployment scripts build the binaries and register them as services on the target hosts.
+
+## Project Layout
+
+```text
+cmd/app/       Main controller entry point
+cmd/temp/      Temperature-agent entry point
+web/           HTTP handlers, embedded UI, and MQTT setup
+utils/         Temperature reading and curve calculation
+scripts/       SSH authorization and deployment helpers
+```

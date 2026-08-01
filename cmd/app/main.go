@@ -1,0 +1,105 @@
+package main
+
+import (
+	"log/slog"
+	"os"
+	"time"
+
+	"fan-curve-server/models"
+	"fan-curve-server/utils"
+	"fan-curve-server/web"
+
+	"github.com/kardianos/service"
+	mqtt "github.com/mochi-mqtt/server/v2"
+)
+
+var version = "1.0.0"
+
+type Program struct {
+	stop chan struct{}
+	mqtt *mqtt.Server
+}
+
+func (p *Program) Start(s service.Service) error {
+	p.stop = make(chan struct{})
+	mqtt, err := web.CreateMqtt()
+	if err != nil {
+		slog.Error("error happened", "err", err)
+		return err
+	}
+	models.MQTT = mqtt
+	p.mqtt = mqtt
+
+	go p.run()
+
+	return nil
+}
+
+func (p *Program) Stop(s service.Service) error {
+	close(p.stop)
+	p.mqtt.Close()
+	models.MQTT = nil
+
+	slog.Info("service stopped")
+
+	return nil
+}
+
+func (p *Program) run() {
+	go web.StartWebApp()
+	go p.mqtt.Serve()
+
+	slog.Info("service started")
+
+	workTicker := time.NewTicker(5 * time.Second)
+
+	defer workTicker.Stop()
+
+	for {
+		select {
+
+		case <-workTicker.C:
+			// Your actual work
+
+			config, err := utils.LoadConfig[models.FanCurveConfig](models.CONFIG_FILE)
+			if err != nil {
+				slog.Error("error happened", "err", err)
+				continue
+			}
+			utils.GetCalcSend(config)
+		case <-p.stop:
+			return
+		}
+	}
+}
+
+func main() {
+	config := &service.Config{
+		Name:        "FanThingMainService",
+		DisplayName: "FanThing Main Service",
+		Description: "it pulls the temps from http endpoints and sends the fan speed to mqtt.",
+	}
+
+	prg := &Program{}
+
+	s, err := service.New(prg, config)
+	if err != nil {
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
+	}
+	// Handle service control actions (install, uninstall, start, stop)
+	if len(os.Args) > 1 {
+		err := service.Control(s, os.Args[1])
+		if err != nil {
+			slog.Error("an error occured", "err", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	err = s.Run()
+	if err != nil {
+		slog.Error("an error occured", "err", err)
+		os.Exit(1)
+	}
+}
